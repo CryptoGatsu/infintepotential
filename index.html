@@ -10,20 +10,31 @@
 
   1. This head block: replace every instance of
      https://REPLACE-WITH-YOUR-DOMAIN.com  with your live domain.
-  2. CONFIG at the bottom of this file. The CA, pair, and chart
-     link are already filled in. Add ponsUrl when the Pons page
-     exists. Anything left blank hides itself.
-  3. Shared ceiling and ATH market cap: deploy api/state.js with
-     this file and add the Upstash for Redis integration on
-     Vercel. It injects KV_REST_API_URL and KV_REST_API_TOKEN
-     automatically. Skip this and the site still works, the
-     ceiling just saves per device instead of globally.
+  2. CONFIG at the bottom of this file. The CA, pair, chart link
+     and Pons link are all filled in and live. Anything left
+     blank hides itself.
+  3. Shared ceiling, ATH market cap, and the post wall all run
+     through api/. Deploy the api folder with this file and add
+     the Upstash for Redis integration on Vercel. It injects
+     KV_REST_API_URL and KV_REST_API_TOKEN automatically. Then
+     add one more environment variable yourself:
+
+         ADMIN_KEY = any long random string
+
+     That key is what unlocks /admin, where you review posts,
+     queue wallets for payout, and mark them sent. Skip the KV
+     setup and the site still loads, the wall just stays closed
+     and the ceiling saves per device.
 
   Upload alongside this file, all at the site root:
      banner.png   figure.png
      favicon.ico  favicon.svg  apple-touch-icon.png
      icon-192.png icon-512.png site.webmanifest
-     api/state.js
+     admin.html   vercel.json
+     api/state.js api/posts.js
+
+  vercel.json sets cleanUrls, so admin.html is served at /admin
+  with no extension in the address bar.
   ============================================================
 -->
 <meta name="description" content="Infinite Potential. A token on Robinhood Chain, launched on Pons. Fixed supply, locked liquidity, powered entirely by belief.">
@@ -148,6 +159,11 @@ body{
 .nav-menu button.active{color:var(--signal);background:rgba(140,255,61,.07)}
 .nav-menu a.nav-x{color:var(--muted);border:1px solid var(--line);margin-left:8px}
 .nav-menu a.nav-x:hover{border-color:var(--signal-dim);color:var(--signal)}
+
+@media (max-width:1200px){
+  .nav-menu a,.nav-menu button{padding:9px 9px;letter-spacing:.15em}
+  .nav-mark{font-size:13px;letter-spacing:.18em}
+}
 
 @media (max-width:640px){
   .nav-inner{padding:0 14px;gap:10px}
@@ -399,6 +415,103 @@ footer{border-top:1px solid var(--line-soft);padding:60px 0 70px;position:relati
 
 .broken-empty{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
 
+/* the wall */
+.wall{margin-top:52px}
+
+.submit-row{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;
+  border:1px solid var(--line-soft);background:rgba(7,15,6,.55);
+  padding:16px;border-radius:2px;
+}
+.submit-row input{
+  flex:1 1 260px;min-width:0;
+  background:rgba(3,8,3,.7);border:1px solid var(--line);color:var(--ink);
+  font-family:var(--mono);font-size:12.5px;padding:13px 14px;border-radius:2px;
+  transition:border-color .2s;
+}
+.submit-row input::placeholder{color:var(--faint)}
+.submit-row input:focus{outline:none;border-color:var(--signal-dim)}
+.submit-row button{
+  flex:0 0 auto;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  font-weight:500;background:var(--signal);color:#041003;border:0;cursor:pointer;
+  padding:0 26px;min-height:46px;border-radius:2px;transition:.18s;
+}
+.submit-row button:hover{background:var(--glow)}
+.submit-row button:disabled{opacity:.45;cursor:progress}
+
+.wall-msg{
+  margin-top:14px;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;
+  color:var(--muted);min-height:18px;
+}
+.wall-msg.bad{color:#c98a5a}
+.wall-msg.good{color:var(--signal)}
+
+.wall-bar{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+  margin-top:34px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);
+}
+.sorts{display:flex;gap:4px}
+.sorts button{
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  background:none;border:1px solid transparent;color:var(--faint);
+  padding:8px 14px;border-radius:2px;cursor:pointer;transition:.2s;
+}
+.sorts button:hover{color:var(--signal)}
+.sorts button.on{color:var(--signal);border-color:var(--line);background:rgba(140,255,61,.06)}
+.wall-count{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+
+.wall-list{display:flex;flex-direction:column;gap:1px;background:var(--line-soft);margin-top:1px}
+.card{
+  background:var(--panel);padding:20px 22px;
+  display:grid;grid-template-columns:58px 1fr;gap:20px;align-items:center;
+}
+.votes{display:flex;flex-direction:column;align-items:center;gap:4px}
+.votes button{
+  background:none;border:1px solid var(--line-soft);color:var(--faint);
+  width:34px;height:26px;border-radius:2px;cursor:pointer;font-size:11px;line-height:1;
+  transition:.18s;display:flex;align-items:center;justify-content:center;
+}
+.votes button:hover{border-color:var(--signal-dim);color:var(--signal)}
+.votes button:disabled{opacity:.35;cursor:default}
+.votes .tally{font-family:var(--mono);font-size:15px;color:var(--glow);line-height:1;padding:2px 0}
+.votes .tally.neg{color:var(--faint)}
+
+.card-main{min-width:0}
+.card-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.card-handle{font-family:var(--display);font-size:16px;color:var(--glow);letter-spacing:.05em}
+.card-when{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.card-link{
+  display:inline-block;margin-top:7px;font-family:var(--mono);font-size:12px;
+  color:var(--muted);text-decoration:none;word-break:break-all;transition:.2s;
+}
+.card-link:hover{color:var(--signal)}
+.card-meta{margin-top:9px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);
+  border:1px solid var(--line-soft);padding:4px 9px;border-radius:2px;
+}
+.chip.win{color:var(--signal);border-color:var(--line)}
+
+.wall-empty{background:var(--panel);padding:36px 22px;text-align:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+
+.pager{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:26px}
+.pager button{
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  background:none;border:1px solid var(--line);color:var(--muted);
+  padding:10px 18px;border-radius:2px;cursor:pointer;transition:.2s;
+}
+.pager button:hover:not(:disabled){border-color:var(--signal-dim);color:var(--signal)}
+.pager button:disabled{opacity:.3;cursor:default}
+.pager span{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--faint)}
+
+@media (max-width:640px){
+  .card{grid-template-columns:46px 1fr;gap:14px;padding:18px 14px}
+  .votes button{width:30px;height:24px}
+  .submit-row{padding:12px}
+  .submit-row button{width:100%}
+}
+
 /* interstitial, deliberate emptiness */
 .void-break{
   border:0;padding:clamp(140px,24vw,300px) 0;text-align:center;position:relative;
@@ -489,8 +602,10 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
   <div class="nav-inner">
     <button class="nav-mark" type="button" data-scroll="top"><span class="mark-full">Infinite Potential </span><b>$IP</b></button>
     <ul class="nav-menu">
-      <li><button type="button" data-scroll="what">About</button></li>
+      <li class="nav-hide-sm"><button type="button" data-scroll="what">About</button></li>
       <li class="nav-hide-sm"><button type="button" data-scroll="belief">Belief</button></li>
+      <li><button type="button" data-scroll="rewards">Rewards</button></li>
+      <li><button type="button" data-scroll="wall">Wall</button></li>
       <li><button type="button" data-scroll="break">Break it</button></li>
       <li class="nav-hide-sm"><button type="button" data-scroll="proof">Proof</button></li>
       <li><button type="button" data-scroll="tokenomics">Tokenomics</button></li>
@@ -601,6 +716,98 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ============ REWARDS ============ -->
+<section id="rewards">
+  <div class="wrap">
+    <span class="eyebrow">Creator rewards</span>
+    <h2>The fees come back</h2>
+    <p style="margin-top:22px">Pons charges a 1% fee on every buy and sell, and it accrues inside the locked liquidity position in two currencies, $IP and WETH. Seventy percent of that goes to the creator wallet. That is the standard split, it was snapshotted when the token launched, and it cannot be changed by anyone.</p>
+    <p style="margin-top:18px"><strong>The $IP side of those rewards goes back out to the people who show up.</strong> Not a treasury, not a marketing budget, not a wallet that quietly grows. Post about $IP and you become eligible for a share of the supply that trading generates.</p>
+
+    <dl class="tok">
+      <div class="tok-cell">
+        <dt>Pool fee</dt>
+        <dd>1%<small>Charged by Pons on every trade, collected in $IP and WETH inside the locked position.</small></dd>
+      </div>
+      <div class="tok-cell">
+        <dt>Creator share</dt>
+        <dd>70%<small>The remaining 30% goes to the Pons protocol. Fixed at launch, immutable afterward.</small></dd>
+      </div>
+      <div class="tok-cell">
+        <dt>Back to the community</dt>
+        <dd>The $IP side<small>Every token that accrues on the creator side is handed back out to holders and posters.</small></dd>
+      </div>
+    </dl>
+
+    <div class="proof-grid" style="margin-top:1px">
+      <article class="proof">
+        <div class="proof-date">Step one</div>
+        <h3>Post</h3>
+        <p>Make something about $IP and put it where people can find it. A meme, a thread, a chart, a video, a joke that lands. Tag the community so it can be seen. There is no application and no form to fill out.</p>
+        <div class="after">Anyone can start right now</div>
+      </article>
+
+      <article class="proof">
+        <div class="proof-date">Step two</div>
+        <h3>Get seen</h3>
+        <p>Reach is the whole signal. The posts that travel are the ones that pulled someone new in, and that is exactly what the rewards are for. Effort counts, volume alone does not.</p>
+        <div class="after">The work is the qualification</div>
+      </article>
+
+      <article class="proof">
+        <div class="proof-date">Step three</div>
+        <h3>Get $IP</h3>
+        <p>As trading generates creator rewards in $IP, those tokens get distributed back to the people doing the posting. The more the community moves, the more there is to send back to it.</p>
+        <div class="after">Supply flows toward the people who earn it</div>
+      </article>
+    </div>
+
+    <p style="margin-top:38px">The supply is fixed at one billion and none of it was set aside at launch. The only way any of it moves is if somebody does something worth seeing. That puts the ceiling on this exactly as high as the community is capable of, which was the point the whole time.</p>
+
+    <p class="tok-note">Distributions are made at the creator's discretion. There is no fixed rate, no guaranteed amount, no schedule you are owed, and nothing here is payment for services or a return on an investment. Buying $IP does not entitle you to a distribution, and posting is not a purchase. The program can change or end at any time.</p>
+  </div>
+</section>
+
+<!-- ============ THE WALL ============ -->
+<section id="wall">
+  <div class="wrap">
+    <span class="eyebrow">The wall</span>
+    <h2>Put your post up</h2>
+    <p style="margin-top:22px">Drop the link to your post and the wallet you want $IP sent to. Everyone else votes. What rises is what the community decided was worth rewarding, and that is the list the distributions come from.</p>
+
+    <div class="wall" id="wallRoot">
+      <div class="submit-row">
+        <input id="postUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false"
+               placeholder="https://x.com/you/status/123..." aria-label="Link to your X post">
+        <input id="postWallet" type="text" inputmode="text" autocomplete="off" spellcheck="false"
+               placeholder="0x your wallet address" aria-label="Your wallet address">
+        <button id="postSubmit" type="button">Submit</button>
+      </div>
+      <p class="wall-msg" id="wallMsg"></p>
+
+      <div class="wall-bar">
+        <div class="sorts">
+          <button type="button" class="on" data-sort="top">Top</button>
+          <button type="button" data-sort="new">Newest</button>
+        </div>
+        <span class="wall-count" id="wallCount"></span>
+      </div>
+
+      <div class="wall-list" id="wallList">
+        <div class="wall-empty">Loading the wall</div>
+      </div>
+
+      <div class="pager" id="wallPager" hidden>
+        <button type="button" id="pagePrev">Back</button>
+        <span id="pageInfo"></span>
+        <button type="button" id="pageNext">More</button>
+      </div>
+    </div>
+
+    <p class="tok-note">Only public X posts are accepted, one entry per post, and the wallet must be an address on Robinhood Chain that you control. Double check it, since tokens sent to the wrong address cannot be recovered. Being on the wall or ranking highly does not entitle anyone to a distribution. See the note under Creator rewards.</p>
   </div>
 </section>
 
@@ -737,11 +944,11 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
       </div>
       <div class="tok-cell">
         <dt>Trading fee</dt>
-        <dd>1%<small>Charged by the Pons protocol on swaps. There is no additional token tax on transfers.</small></dd>
+        <dd>1%<small>Charged by Pons on swaps and split 70/30 between the creator and the protocol. No additional token tax on transfers.</small></dd>
       </div>
       <div class="tok-cell">
         <dt>Allocations</dt>
-        <dd>None<small>No presale, no team allocation, no vesting schedule, no reserved treasury.</small></dd>
+        <dd>None<small>No presale, no team allocation, no vesting schedule, no reserved treasury. The creator's $IP fees go back to the community.</small></dd>
       </div>
     </dl>
 
@@ -756,6 +963,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
       <div class="foot-mark">Infinite Potential</div>
       <div class="foot-links">
         <button type="button" data-scroll="what">About</button>
+        <button type="button" data-scroll="rewards">Rewards</button>
+        <button type="button" data-scroll="wall">Wall</button>
         <button type="button" data-scroll="break">Break it</button>
         <button type="button" data-scroll="proof">Proof</button>
         <button type="button" data-scroll="tokenomics">Tokenomics</button>
@@ -770,6 +979,8 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
       This project is not affiliated with, endorsed by, sponsored by, or connected to Robinhood Markets, Inc., Pons Labs, LLC, Uniswap, or any other company or individual named on this page. Robinhood Chain is a permissionless network, and deployment on it does not imply any review, approval, or relationship. The historical events described above are included to illustrate a theme and have no connection whatsoever to this token or its performance.
       <br><br>
       Crypto assets are extremely volatile and speculative. Liquidity can be thin, prices can move to zero, smart contracts and wallets can fail, and you may lose the entire amount you spend. Only ever use funds you can afford to lose completely. Always verify the contract address through official sources before transacting, since fake tokens and phishing sites are common. Availability may be restricted in your jurisdiction, and it is your responsibility to comply with the laws that apply to you. By using this site you accept that you are solely responsible for your own decisions.
+      <br><br>
+      <strong>On community rewards.</strong> Any distribution of creator fee proceeds is voluntary, discretionary, and made by the creator. There is no contract, no entitlement, no guaranteed amount, and no schedule. Holding $IP does not entitle you to a distribution, distributions are not a return on an investment or a dividend, and they are not compensation for services. Do not buy $IP, and do not create content, in the expectation of receiving anything. The program may be changed, paused, or ended at any time without notice. You are responsible for any tax consequences of tokens you receive and for complying with the terms of any platform you post on, including its rules on disclosing a financial interest.
     </p>
   </div>
 </footer>
@@ -785,9 +996,7 @@ const CONFIG = {
   chain:       "robinhood",
   pair:        "0x905288de491967770caa5fcc70e3a6c7fe436f19",
   dexUrl:      "https://dexscreener.com/robinhood/0x905288de491967770caa5fcc70e3a6c7fe436f19",
-  ponsUrl:     "https://www.ponsfamily.com/launchpad/0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B",   // Pons token page. Blank makes the button scroll to Tokenomics.
-                     // Uniswap fallback if you want it live right now:
-                     // https://app.uniswap.org/swap?outputCurrency=0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B&chain=robinhood
+  ponsUrl:     "https://www.ponsfamily.com/launchpad/0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B",
   stateApi:    "/api/state",   // shared ceiling and ATH. Blank uses per device storage only
   xUrl:        "https://x.com/iponrh",
   communityUrl:"https://x.com/i/communities/1980356612952129721",
@@ -1150,6 +1359,223 @@ const CONFIG = {
     setCeiling();
     load();
     setInterval(refresh, 20000);
+  })();
+
+  /* ---------- The wall ----------
+     Submissions, voting, and paging. Five at a time so the section stays
+     readable, sorted either by net votes or by newest. */
+  (function(){
+    const root   = document.getElementById('wallRoot');
+    if (!root) return;
+    const urlIn  = document.getElementById('postUrl');
+    const walIn  = document.getElementById('postWallet');
+    const subBtn = document.getElementById('postSubmit');
+    const msgEl  = document.getElementById('wallMsg');
+    const listEl = document.getElementById('wallList');
+    const cntEl  = document.getElementById('wallCount');
+    const pager  = document.getElementById('wallPager');
+    const prev   = document.getElementById('pagePrev');
+    const next   = document.getElementById('pageNext');
+    const info   = document.getElementById('pageInfo');
+    const sorts  = Array.from(document.querySelectorAll('.sorts button'));
+
+    const API = '/api/posts';
+    const LIMIT = 5;
+    let view = 'top';
+    let offset = 0;
+    let total = 0;
+    let live = true;
+    const myVotes = new Set();
+
+    function say(text, kind){
+      msgEl.textContent = text || '';
+      msgEl.className = 'wall-msg' + (kind ? ' ' + kind : '');
+    }
+
+    function ago(ts){
+      const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+      if (s < 60) return s + 's ago';
+      if (s < 3600) return Math.floor(s / 60) + 'm ago';
+      if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+      return Math.floor(s / 86400) + 'd ago';
+    }
+
+    function offline(){
+      live = false;
+      root.querySelector('.submit-row').hidden = true;
+      document.querySelector('.wall-bar').hidden = true;
+      listEl.innerHTML = '<div class="wall-empty">The wall opens once the board is connected</div>';
+      pager.hidden = true;
+    }
+
+    function card(p){
+      const el = document.createElement('article');
+      el.className = 'card';
+      el.dataset.id = p.id;
+
+      const votes = document.createElement('div');
+      votes.className = 'votes';
+
+      const up = document.createElement('button');
+      up.type = 'button'; up.textContent = '▲'; up.title = 'Worth rewarding';
+      up.setAttribute('aria-label', 'Vote up');
+
+      const tally = document.createElement('span');
+      tally.className = 'tally' + (p.score < 0 ? ' neg' : '');
+      tally.textContent = p.score;
+
+      const down = document.createElement('button');
+      down.type = 'button'; down.textContent = '▼'; down.title = 'Not this one';
+      down.setAttribute('aria-label', 'Vote down');
+
+      if (myVotes.has(String(p.id))){ up.disabled = true; down.disabled = true; }
+
+      up.addEventListener('click', () => vote(p.id, 'up', el));
+      down.addEventListener('click', () => vote(p.id, 'down', el));
+      votes.append(up, tally, down);
+
+      const main = document.createElement('div');
+      main.className = 'card-main';
+
+      const top = document.createElement('div');
+      top.className = 'card-top';
+      const handle = document.createElement('span');
+      handle.className = 'card-handle';
+      handle.textContent = p.handle || 'Anonymous';
+      const when = document.createElement('span');
+      when.className = 'card-when';
+      when.textContent = ago(p.created);
+      top.append(handle, when);
+
+      const link = document.createElement('a');
+      link.className = 'card-link';
+      link.href = p.url;
+      link.target = '_blank';
+      link.rel = 'noopener nofollow ugc';
+      link.textContent = p.url.replace('https://', '');
+
+      const meta = document.createElement('div');
+      meta.className = 'card-meta';
+      const w = document.createElement('span');
+      w.className = 'chip';
+      w.textContent = p.wallet;
+      meta.appendChild(w);
+      if (p.paid){
+        const c = document.createElement('span');
+        c.className = 'chip win'; c.textContent = 'Sent';
+        meta.appendChild(c);
+      } else if (p.selected){
+        const c = document.createElement('span');
+        c.className = 'chip win'; c.textContent = 'Queued';
+        meta.appendChild(c);
+      }
+
+      main.append(top, link, meta);
+      el.append(votes, main);
+      return el;
+    }
+
+    function render(posts){
+      listEl.innerHTML = '';
+      if (!posts.length){
+        const empty = document.createElement('div');
+        empty.className = 'wall-empty';
+        empty.textContent = offset > 0 ? 'Nothing further back' : 'Nothing on the wall yet. Go first.';
+        listEl.appendChild(empty);
+      } else {
+        posts.forEach(p => listEl.appendChild(card(p)));
+      }
+
+      cntEl.textContent = total === 1 ? '1 post' : total.toLocaleString() + ' posts';
+      pager.hidden = total <= LIMIT;
+      prev.disabled = offset === 0;
+      next.disabled = offset + LIMIT >= total;
+      const from = total === 0 ? 0 : offset + 1;
+      const to = Math.min(offset + LIMIT, total);
+      info.textContent = from + ' to ' + to + ' of ' + total;
+    }
+
+    async function load(){
+      if (!live) return;
+      try {
+        const r = await fetch(API + '?view=' + view + '&offset=' + offset + '&limit=' + LIMIT, { cache: 'no-store' });
+        if (r.status === 501) { offline(); return; }
+        const d = await r.json();
+        if (!d.configured) { offline(); return; }
+        total = d.total || 0;
+        render(d.posts || []);
+      } catch (e) { offline(); }
+    }
+
+    async function send(payload){
+      const r = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const d = await r.json().catch(() => ({}));
+      return { ok: r.ok, status: r.status, data: d };
+    }
+
+    async function vote(id, dir, el){
+      const btns = el.querySelectorAll('.votes button');
+      btns.forEach(b => b.disabled = true);
+      const res = await send({ action: 'vote', id: id, dir: dir });
+      if (res.ok && res.data.post){
+        myVotes.add(String(id));
+        const t = el.querySelector('.tally');
+        t.textContent = res.data.post.score;
+        t.classList.toggle('neg', res.data.post.score < 0);
+        say('');
+      } else {
+        say(res.data.error || 'That vote did not go through.', 'bad');
+        if (res.status === 409) myVotes.add(String(id));
+        else btns.forEach(b => b.disabled = false);
+      }
+    }
+
+    subBtn.addEventListener('click', async () => {
+      const url = urlIn.value.trim();
+      const wallet = walIn.value.trim();
+      if (!url || !wallet){
+        say('Both the post link and the wallet address are needed.', 'bad');
+        return;
+      }
+      subBtn.disabled = true;
+      say('Sending it up');
+      const res = await send({ action: 'submit', url: url, wallet: wallet });
+      subBtn.disabled = false;
+      if (res.ok){
+        urlIn.value = '';
+        walIn.value = '';
+        say('On the wall. Go get some votes.', 'good');
+        if (res.data.post) myVotes.add(String(res.data.post.id));
+        view = 'new'; offset = 0;
+        sorts.forEach(b => b.classList.toggle('on', b.dataset.sort === 'new'));
+        load();
+      } else {
+        say(res.data.error || 'That did not go through.', 'bad');
+      }
+    });
+
+    [urlIn, walIn].forEach(input => {
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') subBtn.click(); });
+    });
+
+    sorts.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('on')) return;
+        sorts.forEach(b => b.classList.toggle('on', b === btn));
+        view = btn.dataset.sort;
+        offset = 0;
+        load();
+      });
+    });
+
+    prev.addEventListener('click', () => { offset = Math.max(0, offset - LIMIT); load(); });
+    next.addEventListener('click', () => { offset = offset + LIMIT; load(); });
+
+    load();
   })();
 
   /* ---------- Deep field ----------

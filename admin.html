@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wall admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#030803">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --void:#030803; --panel:#070f06; --line:#1c3a12; --line-soft:#132a0d;
+  --signal:#8CFF3D; --signal-dim:#5f9e2c; --glow:#c8ff8a;
+  --ink:#e9ffcf; --muted:#8ab369; --faint:#5d7c47; --warn:#c98a5a;
+  --display:'Cinzel',Georgia,serif; --body:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--void);color:var(--ink);font-family:var(--body);font-weight:300;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+header{border-bottom:1px solid var(--line-soft);padding:22px 0;position:sticky;top:0;background:rgba(3,8,3,.9);backdrop-filter:blur(12px);z-index:10}
+.head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.mark{font-family:var(--display);font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink)}
+.mark b{font-weight:400;color:var(--signal)}
+.head a,.head button.link{
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--faint);text-decoration:none;background:none;border:0;cursor:pointer;transition:.2s;padding:0
+}
+.head a:hover,.head button.link:hover{color:var(--signal)}
+.head-right{display:flex;gap:20px;align-items:center}
+
+main{padding:38px 0 90px}
+
+h1{font-family:var(--display);font-weight:500;font-size:26px;letter-spacing:.06em;text-transform:uppercase;color:var(--glow)}
+.sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-top:8px}
+
+/* gate */
+.gate{max-width:420px;margin:16vh auto 0;text-align:center}
+.gate h1{margin-bottom:10px}
+.gate p{color:var(--muted);font-size:14px;margin-bottom:24px}
+.gate input{
+  width:100%;background:rgba(3,8,3,.7);border:1px solid var(--line);color:var(--ink);
+  font-family:var(--mono);font-size:13px;padding:14px;border-radius:2px;text-align:center;letter-spacing:.1em
+}
+.gate input:focus{outline:none;border-color:var(--signal-dim)}
+.gate button{
+  width:100%;margin-top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  font-weight:500;background:var(--signal);color:#041003;border:0;cursor:pointer;padding:15px;border-radius:2px
+}
+.gate button:hover{background:var(--glow)}
+.gate .err{color:var(--warn);font-family:var(--mono);font-size:11.5px;margin-top:14px;min-height:18px}
+
+/* tabs */
+.tabs{display:flex;gap:4px;margin:30px 0 0;border-bottom:1px solid var(--line-soft);padding-bottom:14px;flex-wrap:wrap}
+.tabs button{
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  background:none;border:1px solid transparent;color:var(--faint);padding:9px 15px;border-radius:2px;cursor:pointer;transition:.2s
+}
+.tabs button:hover{color:var(--signal)}
+.tabs button.on{color:var(--signal);border-color:var(--line);background:rgba(140,255,61,.06)}
+
+/* payout tools */
+.tools{
+  margin-top:26px;border:1px solid var(--line-soft);background:rgba(7,15,6,.55);
+  padding:20px;border-radius:2px;display:flex;gap:10px;flex-wrap:wrap;align-items:center
+}
+.tools button{
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  background:none;border:1px solid var(--line);color:var(--muted);padding:11px 16px;border-radius:2px;cursor:pointer;transition:.2s
+}
+.tools button:hover{border-color:var(--signal-dim);color:var(--signal)}
+.tools .spacer{flex:1 1 auto}
+.tools .note{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+
+/* rows */
+.list{display:flex;flex-direction:column;gap:1px;background:var(--line-soft);margin-top:22px}
+.row{background:var(--panel);padding:18px 20px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center}
+.row.is-selected{background:#0b1a08;box-shadow:inset 3px 0 0 var(--signal)}
+.row.is-paid{opacity:.55}
+.who{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.who .handle{font-family:var(--display);font-size:16px;color:var(--glow);letter-spacing:.05em}
+.who .score{font-family:var(--mono);font-size:12px;color:var(--signal)}
+.who .score.neg{color:var(--warn)}
+.who .when{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.row a.plink{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:11.5px;color:var(--muted);text-decoration:none;word-break:break-all}
+.row a.plink:hover{color:var(--signal)}
+.wallet{margin-top:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wallet code{
+  font-family:var(--mono);font-size:11.5px;color:var(--ink);background:rgba(3,8,3,.7);
+  border:1px solid var(--line-soft);padding:5px 9px;border-radius:2px;word-break:break-all
+}
+.wallet button{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  background:none;border:1px solid var(--line-soft);color:var(--faint);padding:5px 9px;border-radius:2px;cursor:pointer;transition:.2s
+}
+.wallet button:hover{border-color:var(--signal-dim);color:var(--signal)}
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--line);color:var(--signal);padding:4px 8px;border-radius:2px}
+
+.acts{display:flex;flex-direction:column;gap:6px;min-width:130px}
+.acts button{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  background:none;border:1px solid var(--line);color:var(--muted);padding:9px 12px;border-radius:2px;cursor:pointer;transition:.2s;white-space:nowrap
+}
+.acts button:hover{border-color:var(--signal-dim);color:var(--signal)}
+.acts button.danger:hover{border-color:var(--warn);color:var(--warn)}
+.acts button.primary{background:var(--signal);color:#041003;border-color:var(--signal);font-weight:500}
+.acts button.primary:hover{background:var(--glow);color:#041003}
+.acts button:disabled{opacity:.35;cursor:default}
+
+.empty{background:var(--panel);padding:44px 20px;text-align:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);
+  background:rgba(7,15,6,.96);border:1px solid var(--line);color:var(--ink);
+  font-family:var(--mono);font-size:11.5px;padding:12px 20px;border-radius:2px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90vw;text-align:center
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+dialog.export{
+  background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  border-radius:2px;padding:0;max-width:min(680px,92vw);width:100%
+}
+dialog.export::backdrop{background:rgba(3,8,3,.82)}
+.export-head{padding:18px 20px;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;align-items:center;gap:14px}
+.export-head h2{font-family:var(--display);font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--glow);font-weight:500}
+.export-head button{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:none;border:1px solid var(--line);color:var(--muted);padding:8px 13px;border-radius:2px;cursor:pointer}
+.export textarea{
+  width:100%;height:300px;background:var(--void);border:0;color:var(--ink);
+  font-family:var(--mono);font-size:12px;padding:18px;resize:vertical
+}
+.export textarea:focus{outline:none}
+
+@media (max-width:680px){
+  .row{grid-template-columns:1fr}
+  .acts{flex-direction:row;flex-wrap:wrap;min-width:0}
+  .acts button{flex:1 1 auto}
+}
+</style>
+</head>
+<body>
+
+<!-- gate -->
+<div class="gate" id="gate">
+  <h1>Wall admin</h1>
+  <p>Enter the admin key. It is the ADMIN_KEY value from your environment variables.</p>
+  <input id="keyInput" type="password" autocomplete="off" placeholder="admin key" aria-label="Admin key">
+  <button id="keyGo" type="button">Unlock</button>
+  <p class="err" id="keyErr"></p>
+</div>
+
+<!-- console -->
+<div id="app" hidden>
+  <header>
+    <div class="wrap head">
+      <div class="mark">Wall admin <b>$IP</b></div>
+      <div class="head-right">
+        <a href="/">Back to site</a>
+        <button class="link" id="refreshBtn" type="button">Refresh</button>
+        <button class="link" id="lockBtn" type="button">Lock</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Posts</h1>
+    <p class="sub" id="summary">Loading</p>
+
+    <div class="tabs">
+      <button type="button" class="on" data-tab="all">All posts</button>
+      <button type="button" data-tab="selected">Payout queue</button>
+      <button type="button" data-tab="paid">Already sent</button>
+    </div>
+
+    <div class="tools" id="tools" hidden>
+      <button type="button" id="copyWallets">Copy wallet list</button>
+      <button type="button" id="copyCsv">Copy as CSV</button>
+      <button type="button" id="viewExport">View queue</button>
+      <span class="spacer"></span>
+      <span class="note" id="queueNote"></span>
+    </div>
+
+    <div class="list" id="list"><div class="empty">Loading</div></div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<dialog class="export" id="exportDlg">
+  <div class="export-head">
+    <h2>Payout queue</h2>
+    <button type="button" id="exportClose">Close</button>
+  </div>
+  <textarea id="exportText" readonly spellcheck="false"></textarea>
+</dialog>
+
+<script>
+(function(){
+  const API = '/api/posts';
+  const gate = document.getElementById('gate');
+  const app  = document.getElementById('app');
+  const keyInput = document.getElementById('keyInput');
+  const keyErr = document.getElementById('keyErr');
+  const listEl = document.getElementById('list');
+  const summary = document.getElementById('summary');
+  const tools = document.getElementById('tools');
+  const queueNote = document.getElementById('queueNote');
+  const toastEl = document.getElementById('toast');
+  const dlg = document.getElementById('exportDlg');
+  const exportText = document.getElementById('exportText');
+  const tabs = Array.from(document.querySelectorAll('.tabs button'));
+
+  let KEY = '';
+  let tab = 'all';
+  let posts = [];
+
+  /* session storage only, so the key is gone when the tab closes */
+  function remember(k){ try { sessionStorage.setItem('ip:adminkey', k); } catch (e) {} }
+  function recall(){ try { return sessionStorage.getItem('ip:adminkey') || ''; } catch (e) { return ''; } }
+  function forget(){ try { sessionStorage.removeItem('ip:adminkey'); } catch (e) {} }
+
+  let toastTimer;
+  function toast(text){
+    toastEl.textContent = text;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2400);
+  }
+
+  async function api(path, options){
+    const opts = options || {};
+    opts.headers = Object.assign({ 'x-admin-key': KEY }, opts.headers || {});
+    opts.cache = 'no-store';
+    const r = await fetch(API + path, opts);
+    const d = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, data: d };
+  }
+
+  async function act(action, id, extra){
+    const body = Object.assign({ action: action, id: id }, extra || {});
+    const res = await api('', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok){
+      toast(res.data.error || 'That did not work');
+      return false;
+    }
+    return true;
+  }
+
+  function ago(ts){
+    const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+    if (s < 60) return s + 's ago';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    return Math.floor(s / 86400) + 'd ago';
+  }
+
+  async function copy(text, label){
+    try { await navigator.clipboard.writeText(text); toast(label + ' copied'); }
+    catch (e) { toast('Could not copy. Use View queue instead.'); }
+  }
+
+  function visible(){
+    if (tab === 'selected') return posts.filter(p => p.selected && !p.paid);
+    if (tab === 'paid') return posts.filter(p => p.paid);
+    return posts.filter(p => !p.paid);
+  }
+
+  function row(p){
+    const el = document.createElement('div');
+    el.className = 'row' + (p.selected && !p.paid ? ' is-selected' : '') + (p.paid ? ' is-paid' : '');
+
+    const main = document.createElement('div');
+
+    const who = document.createElement('div');
+    who.className = 'who';
+    const h = document.createElement('span');
+    h.className = 'handle'; h.textContent = p.handle || 'Anonymous';
+    const score = document.createElement('span');
+    const net = p.up - p.down;
+    score.className = 'score' + (net < 0 ? ' neg' : '');
+    score.textContent = (net > 0 ? '+' : '') + net + '  (' + p.up + ' up, ' + p.down + ' down)';
+    const when = document.createElement('span');
+    when.className = 'when'; when.textContent = ago(p.created);
+    who.append(h, score, when);
+
+    const link = document.createElement('a');
+    link.className = 'plink'; link.href = p.url; link.target = '_blank';
+    link.rel = 'noopener nofollow'; link.textContent = p.url.replace('https://', '');
+
+    const wal = document.createElement('div');
+    wal.className = 'wallet';
+    const code = document.createElement('code');
+    code.textContent = p.wallet;
+    const cbtn = document.createElement('button');
+    cbtn.type = 'button'; cbtn.textContent = 'Copy';
+    cbtn.addEventListener('click', () => copy(p.wallet, 'Address'));
+    wal.append(code, cbtn);
+    if (p.paid){
+      const t = document.createElement('span');
+      t.className = 'tag';
+      t.textContent = p.amount ? 'Sent ' + p.amount : 'Sent';
+      wal.appendChild(t);
+    } else if (p.selected){
+      const t = document.createElement('span');
+      t.className = 'tag'; t.textContent = 'Queued';
+      wal.appendChild(t);
+    }
+
+    main.append(who, link, wal);
+
+    const acts = document.createElement('div');
+    acts.className = 'acts';
+
+    if (!p.paid){
+      const sel = document.createElement('button');
+      sel.type = 'button';
+      sel.className = p.selected ? '' : 'primary';
+      sel.textContent = p.selected ? 'Unqueue' : 'Queue for payout';
+      sel.addEventListener('click', async () => {
+        sel.disabled = true;
+        const ok = await act(p.selected ? 'unselect' : 'select', p.id);
+        if (ok) await load();
+        sel.disabled = false;
+      });
+      acts.appendChild(sel);
+    }
+
+    if (p.selected && !p.paid){
+      const paid = document.createElement('button');
+      paid.type = 'button'; paid.textContent = 'Mark sent';
+      paid.addEventListener('click', async () => {
+        const amount = window.prompt('How much $IP was sent to ' + p.wallet + '? Leave blank to skip.', '');
+        if (amount === null) return;
+        paid.disabled = true;
+        const ok = await act('paid', p.id, { amount: amount });
+        if (ok) { toast('Marked sent'); await load(); }
+        paid.disabled = false;
+      });
+      acts.appendChild(paid);
+    }
+
+    const del = document.createElement('button');
+    del.type = 'button'; del.className = 'danger'; del.textContent = 'Remove';
+    del.addEventListener('click', async () => {
+      if (!window.confirm('Remove this post from the wall for everyone? This cannot be undone.')) return;
+      del.disabled = true;
+      const ok = await act('remove', p.id);
+      if (ok) { toast('Removed'); await load(); }
+      del.disabled = false;
+    });
+    acts.appendChild(del);
+
+    el.append(main, acts);
+    return el;
+  }
+
+  function render(){
+    const rows = visible();
+    listEl.innerHTML = '';
+    if (!rows.length){
+      const e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = tab === 'selected' ? 'Nothing queued yet' : (tab === 'paid' ? 'Nothing sent yet' : 'No posts on the wall yet');
+      listEl.appendChild(e);
+    } else {
+      rows.forEach(p => listEl.appendChild(row(p)));
+    }
+
+    const queued = posts.filter(p => p.selected && !p.paid);
+    const sent = posts.filter(p => p.paid);
+    summary.textContent = posts.length + ' total  ·  ' + queued.length + ' queued  ·  ' + sent.length + ' sent';
+    tools.hidden = tab !== 'selected';
+    queueNote.textContent = queued.length + (queued.length === 1 ? ' wallet waiting' : ' wallets waiting');
+  }
+
+  async function load(){
+    const res = await api('?view=admin');
+    if (res.status === 401){ lock('That key was rejected.'); return; }
+    if (res.status === 501){ listEl.innerHTML = '<div class="empty">Board not connected. Set the KV variables.</div>'; return; }
+    if (!res.ok){ toast('Could not load the wall'); return; }
+    posts = res.data.posts || [];
+    render();
+  }
+
+  function queueText(kind){
+    const q = posts.filter(p => p.selected && !p.paid);
+    if (kind === 'wallets') return q.map(p => p.wallet).join('\n');
+    const head = 'wallet,score,handle,url\n';
+    return head + q.map(p => [p.wallet, p.up - p.down, p.handle, p.url].join(',')).join('\n');
+  }
+
+  document.getElementById('copyWallets').addEventListener('click', () => copy(queueText('wallets'), 'Wallets'));
+  document.getElementById('copyCsv').addEventListener('click', () => copy(queueText('csv'), 'CSV'));
+  document.getElementById('viewExport').addEventListener('click', () => {
+    exportText.value = queueText('csv');
+    dlg.showModal();
+  });
+  document.getElementById('exportClose').addEventListener('click', () => dlg.close());
+
+  tabs.forEach(b => b.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.toggle('on', x === b));
+    tab = b.dataset.tab;
+    render();
+  }));
+
+  document.getElementById('refreshBtn').addEventListener('click', load);
+  document.getElementById('lockBtn').addEventListener('click', () => lock(''));
+
+  function lock(message){
+    KEY = '';
+    forget();
+    app.hidden = true;
+    gate.hidden = false;
+    keyErr.textContent = message || '';
+    keyInput.value = '';
+    keyInput.focus();
+  }
+
+  async function unlock(key){
+    if (!key){ keyErr.textContent = 'Enter the key first.'; return; }
+    KEY = key;
+    const res = await api('?view=admin');
+    if (res.status === 401){ KEY = ''; keyErr.textContent = 'That key was rejected.'; return; }
+    if (res.status === 501){ keyErr.textContent = 'The board is not connected yet. Set KV_REST_API_URL and KV_REST_API_TOKEN.'; return; }
+    if (!res.ok){ keyErr.textContent = 'Could not reach the board.'; return; }
+    remember(key);
+    posts = res.data.posts || [];
+    gate.hidden = true;
+    app.hidden = false;
+    render();
+  }
+
+  document.getElementById('keyGo').addEventListener('click', () => unlock(keyInput.value.trim()));
+  keyInput.addEventListener('keydown', e => { if (e.key === 'Enter') unlock(keyInput.value.trim()); });
+
+  const saved = recall();
+  if (saved) unlock(saved); else keyInput.focus();
+})();
+</script>
+</body>
+</html>
