@@ -6,18 +6,24 @@
 <title>Infinite Potential</title>
 <!--
   ============================================================
-  DEPLOY CHECKLIST. Two places to edit, nothing else.
+  DEPLOY CHECKLIST.
 
   1. This head block: replace every instance of
      https://REPLACE-WITH-YOUR-DOMAIN.com  with your live domain.
-  2. The CONFIG object at the bottom of this file: contract,
-     ponsUrl, dexUrl, telegramUrl. Anything left blank simply
-     hides itself, so you can ship with only the CA if you want.
+  2. CONFIG at the bottom of this file. The CA, pair, and chart
+     link are already filled in. Add ponsUrl when the Pons page
+     exists. Anything left blank hides itself.
+  3. Shared ceiling and ATH market cap: deploy api/state.js with
+     this file and add the Upstash for Redis integration on
+     Vercel. It injects KV_REST_API_URL and KV_REST_API_TOKEN
+     automatically. Skip this and the site still works, the
+     ceiling just saves per device instead of globally.
 
   Upload alongside this file, all at the site root:
      banner.png   figure.png
      favicon.ico  favicon.svg  apple-touch-icon.png
      icon-192.png icon-512.png site.webmanifest
+     api/state.js
   ============================================================
 -->
 <meta name="description" content="Infinite Potential. A token on Robinhood Chain, launched on Pons. Fixed supply, locked liquidity, powered entirely by belief.">
@@ -28,16 +34,16 @@
 <link rel="manifest" href="/site.webmanifest">
 <meta name="theme-color" content="#030803">
 
-<link rel="canonical" href="https://www.iponrh.com/">
+<link rel="canonical" href="https://REPLACE-WITH-YOUR-DOMAIN.com/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://www.iponrh.com/">
+<meta property="og:url" content="https://REPLACE-WITH-YOUR-DOMAIN.com/">
 <meta property="og:title" content="Infinite Potential">
 <meta property="og:description" content="Every limit was once permanent. Infinite Potential is a token on Robinhood Chain about the moment belief outruns the limit.">
-<meta property="og:image" content="https://www.iponrh.com/banner.png">
+<meta property="og:image" content="https://REPLACE-WITH-YOUR-DOMAIN.com/banner.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Infinite Potential">
 <meta name="twitter:description" content="Every limit was once permanent. Infinite Potential is a token on Robinhood Chain about the moment belief outruns the limit.">
-<meta name="twitter:image" content="https://www.iponrh.com/banner.png">
+<meta name="twitter:image" content="https://REPLACE-WITH-YOUR-DOMAIN.com/banner.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -219,8 +225,7 @@ section + section{border-top:1px solid var(--line-soft)}
 }
 .ca button:hover{border-color:var(--signal-dim);color:var(--signal)}
 
-.hero-links{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.btn{
+.hero-links{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.btn{
   font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
   text-decoration:none;padding:14px 26px;border-radius:2px;transition:.22s;
   display:inline-flex;align-items:center;justify-content:center;line-height:1;min-height:44px;
@@ -306,6 +311,31 @@ footer{border-top:1px solid var(--line-soft);padding:60px 0 70px;position:relati
 }
 .foot-links a:hover,.foot-links button:hover{color:var(--signal)}
 
+/* live market stats */
+.stats{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);border-radius:2px;
+  overflow:hidden;max-width:100%;
+}
+.stats[hidden]{display:none}
+.stat{
+  background:rgba(7,15,6,.72);padding:14px 26px;min-width:150px;
+  display:flex;flex-direction:column;gap:7px;align-items:center;
+}
+.stat-k{font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--faint);line-height:1}
+.stat-v{font-family:var(--mono);font-size:16px;color:var(--glow);line-height:1;letter-spacing:.02em}
+.stat-v.pending{color:var(--faint)}
+.stats-note{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--faint);margin-top:-14px;
+}
+.live-dot{
+  display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--signal);
+  margin-right:7px;vertical-align:middle;box-shadow:0 0 8px var(--signal);
+  animation:pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
 /* limit breaker */
 .breaker{
   margin-top:56px;border:1px solid var(--line-soft);background:rgba(7,15,6,.55);
@@ -331,7 +361,12 @@ footer{border-top:1px solid var(--line-soft);padding:60px 0 70px;position:relati
 }
 .breaker.flash .ceiling{transform:scale(1.09)}
 
-.ceiling-unit{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--signal-dim);display:block;margin-bottom:30px}
+.ceiling-unit{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--signal-dim);display:block;margin-bottom:10px}
+
+.ceiling-scope{
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--faint);display:block;margin-bottom:28px;
+}
 
 .break-btn{
   font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;font-weight:500;
@@ -341,6 +376,7 @@ footer{border-top:1px solid var(--line-soft);padding:60px 0 70px;position:relati
 }
 .break-btn:hover{background:var(--glow);box-shadow:0 0 60px rgba(140,255,61,.55)}
 .break-btn:active{transform:translateY(1px)}
+.break-btn:disabled{opacity:.45;cursor:progress;box-shadow:none}
 
 .breaker-msg{
   margin:22px auto 0;min-height:44px;max-width:44ch;
@@ -427,6 +463,13 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
   .hero-links .btn{flex:1 1 auto;min-width:140px}
 }
 
+@media (max-width:640px){
+  .stats{width:100%}
+  .stat{min-width:0;flex:1 1 0;padding:12px 6px}
+  .stat-k{font-size:8.5px;letter-spacing:.12em;text-align:center}
+  .stat-v{font-size:13px}
+}
+
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .reveal{opacity:1;transform:none;transition:none}
@@ -476,6 +519,12 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
         <span class="ca-label">Contract</span>
         <span class="ca-value" id="caValue">Dropping at launch</span>
         <button id="copyBtn" type="button">Copy</button>
+      </div>
+
+      <div class="stats" id="stats" hidden>
+        <div class="stat"><span class="stat-k">Market cap</span><span class="stat-v pending" id="statMc">...</span></div>
+        <div class="stat"><span class="stat-k">24h volume</span><span class="stat-v pending" id="statVol">...</span></div>
+        <div class="stat"><span class="stat-k">ATH market cap</span><span class="stat-v pending" id="statAth">...</span></div>
       </div>
 
       <div class="hero-links" id="heroLinks">
@@ -560,12 +609,13 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
   <div class="wrap">
     <span class="eyebrow">Try it</span>
     <h2>Break the limit</h2>
-    <p style="margin-top:22px">The ceiling below is whatever the last person managed. Press the button and it is not the ceiling anymore. There is no final value, no win screen, and no point where the button stops working. That is the entire demonstration.</p>
+    <p style="margin-top:22px">The ceiling below is whatever the last person left standing. It is shared, it does not reset when you refresh, and there is no final value, no win screen, and no point where the button stops working. That is the entire demonstration.</p>
 
     <div class="breaker" id="breaker">
       <span class="breaker-label">Current ceiling</span>
       <span class="ceiling" id="ceiling">0</span>
       <span class="ceiling-unit" id="ceilingUnit">limits standing</span>
+      <span class="ceiling-scope" id="ceilingScope">Loading the last ceiling</span>
 
       <button class="break-btn" id="breakBtn" type="button">Break it</button>
 
@@ -731,12 +781,17 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-off
    ========================================================= */
 const CONFIG = {
   ticker:      "$IP",
-  contract:    "0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B",                          // e.g. "0xabc123..."  shows the CA and the copy button
-  ponsUrl:     "https://www.ponsfamily.com/launchpad/0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B",                          // Pons token page. Blank makes the button scroll to Tokenomics
-  dexUrl:      "https://dexscreener.com/robinhood/0x905288de491967770caa5fcc70e3a6c7fe436f19",                          // DexScreener or chart link. Blank hides the Chart button
+  contract:    "0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B",
+  chain:       "robinhood",
+  pair:        "0x905288de491967770caa5fcc70e3a6c7fe436f19",
+  dexUrl:      "https://dexscreener.com/robinhood/0x905288de491967770caa5fcc70e3a6c7fe436f19",
+  ponsUrl:     "",   // Pons token page. Blank makes the button scroll to Tokenomics.
+                     // Uniswap fallback if you want it live right now:
+                     // https://app.uniswap.org/swap?outputCurrency=0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B&chain=robinhood
+  stateApi:    "/api/state",   // shared ceiling and ATH. Blank uses per device storage only
   xUrl:        "https://x.com/iponrh",
   communityUrl:"https://x.com/i/communities/1980356612952129721",
-  telegramUrl: ""                           // blank hides the Telegram link
+  telegramUrl: ""
 };
 /* ======================================================= */
 
@@ -860,20 +915,131 @@ const CONFIG = {
     targets.forEach(el => io.observe(el));
   }
 
+  /* ---------- Shared state ----------
+     One source of truth for the ceiling and the all time high market cap.
+     If /api/state is not wired up the site degrades to per device storage
+     rather than showing an error, so it is never broken on a static host. */
+  const store = {
+    online: false,
+    async get(){
+      if (!CONFIG.stateApi) return null;
+      try {
+        const r = await fetch(CONFIG.stateApi, { cache: 'no-store' });
+        if (!r.ok) return null;
+        const d = await r.json();
+        if (!d.configured) return null;
+        this.online = true;
+        return d;
+      } catch (e) { return null; }
+    },
+    async post(payload){
+      if (!this.online) return null;
+      try {
+        const r = await fetch(CONFIG.stateApi, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch (e) { return null; }
+    }
+  };
+
+  /* one initial read, awaited by both the stats strip and the breaker */
+  const stateReady = store.get();
+
+  /* per device fallback, wrapped because some embedded viewers block it */
+  const memory = {};
+  const local = {
+    get(k){
+      try { const v = window.localStorage.getItem(k); return v === null ? memory[k] : v; }
+      catch (e) { return memory[k]; }
+    },
+    set(k, v){
+      memory[k] = String(v);
+      try { window.localStorage.setItem(k, String(v)); } catch (e) {}
+    }
+  };
+
+  /* ---------- Live market data ---------- */
+  (function(){
+    const stats  = document.getElementById('stats');
+    const mcEl   = document.getElementById('statMc');
+    const volEl  = document.getElementById('statVol');
+    const athEl  = document.getElementById('statAth');
+    if (!stats || !CONFIG.chain || !CONFIG.pair) return;
+
+    stats.hidden = false;
+
+    function money(n){
+      if (!Number.isFinite(n) || n <= 0) return 'n/a';
+      if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+      return '$' + n.toFixed(0);
+    }
+
+    function put(el, value){
+      el.textContent = value;
+      el.classList.toggle('pending', value === 'n/a' || value === '...');
+    }
+
+    async function tick(){
+      await stateReady;
+      let pair = null;
+      try {
+        const r = await fetch(
+          'https://api.dexscreener.com/latest/dex/pairs/' + CONFIG.chain + '/' + CONFIG.pair,
+          { cache: 'no-store' }
+        );
+        const d = await r.json();
+        pair = (d && d.pairs && d.pairs[0]) || (d && d.pair) || null;
+      } catch (e) { /* leave the last good values on screen */ }
+
+      if (!pair) return;
+
+      const mc  = Number(pair.marketCap || pair.fdv || 0);
+      const vol = Number((pair.volume && pair.volume.h24) || 0);
+
+      put(mcEl, money(mc));
+      put(volEl, money(vol));
+
+      /* all time high, shared when the endpoint is live, local when it is not */
+      let ath = Number(local.get('ip:ath') || 0);
+      if (store.online){
+        const res = await store.post({ action: 'ath', value: mc });
+        if (res && Number.isFinite(res.ath)) ath = res.ath;
+      } else if (mc > ath){
+        ath = mc;
+        local.set('ip:ath', Math.round(mc));
+      }
+      if (mc > ath) ath = mc;
+      put(athEl, money(ath));
+    }
+
+    tick();
+    setInterval(tick, 45000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  })();
+
   /* ---------- Break the limit ----------
-     Each press retires the number that was standing a second ago. The
-     retired values pile up struck through underneath, so the record of
-     broken ceilings is the point rather than the current value. */
+     The ceiling is shared and persistent. Each press retires the number that
+     was standing a second ago, and the retired values pile up struck through
+     underneath, so the record of broken ceilings is the point. */
   (function(){
     const btn    = document.getElementById('breakBtn');
     const ceil   = document.getElementById('ceiling');
     const unit   = document.getElementById('ceilingUnit');
+    const scope  = document.getElementById('ceilingScope');
     const msgEl  = document.getElementById('breakerMsg');
     const listEl = document.getElementById('brokenList');
     const box    = document.getElementById('breaker');
     if (!btn) return;
 
     let count = 0;
+    let ready = false;
+    let pending = 0;
 
     const notes = {
       1:    'That number was the ceiling one second ago. Now it is history.',
@@ -921,7 +1087,37 @@ const CONFIG = {
       while (listEl.children.length > 14) listEl.removeChild(listEl.firstChild);
     }
 
-    btn.addEventListener('click', () => {
+    async function load(){
+      const state = await stateReady;
+      if (state && Number.isFinite(state.ceiling)){
+        count = state.ceiling;
+        scope.textContent = 'Shared by everyone who has visited';
+      } else {
+        count = Number(local.get('ip:ceiling') || 0);
+        scope.textContent = 'Saved on this device';
+      }
+      ready = true;
+      btn.disabled = false;
+      setCeiling();
+      if (count > 0){
+        retire(count - 1);
+        btn.textContent = 'Break it again';
+      }
+    }
+
+    /* someone else may raise it while you are reading */
+    async function refresh(){
+      if (!store.online || document.hidden || pending > 0) return;
+      const state = await store.get();
+      if (state && Number.isFinite(state.ceiling) && state.ceiling > count){
+        count = state.ceiling;
+        setCeiling();
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      if (!ready) return;
+
       retire(count);
       count += 1;
       setCeiling();
@@ -935,11 +1131,25 @@ const CONFIG = {
 
       box.classList.add('flash');
       setTimeout(() => box.classList.remove('flash'), 220);
+      btn.textContent = 'Break it again';
 
-      if (btn.textContent !== 'Break it again') btn.textContent = 'Break it again';
+      if (store.online){
+        pending += 1;
+        const res = await store.post({ action: 'break' });
+        pending -= 1;
+        if (res && Number.isFinite(res.ceiling) && res.ceiling > count){
+          count = res.ceiling;
+          setCeiling();
+        }
+      } else {
+        local.set('ip:ceiling', count);
+      }
     });
 
+    btn.disabled = true;
     setCeiling();
+    load();
+    setInterval(refresh, 20000);
   })();
 
   /* ---------- Deep field ----------
