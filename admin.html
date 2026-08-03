@@ -102,6 +102,15 @@ h1{font-family:var(--display);font-weight:500;font-size:26px;letter-spacing:.06e
 .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
   border:1px solid var(--line);color:var(--signal);padding:4px 8px;border-radius:2px}
 
+.preview{margin-top:12px;max-width:520px}
+.preview[hidden]{display:none}
+.preview-shell{border:1px solid var(--line-soft);border-radius:2px;overflow:hidden;background:rgba(3,8,3,.55)}
+.preview-state{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--faint);padding:18px;display:flex;align-items:center;gap:10px}
+.preview-state a{color:var(--signal-dim);text-decoration:none;letter-spacing:.14em}
+.preview-state a:hover{color:var(--signal)}
+.preview-shell twitter-widget,.preview-shell iframe{max-width:100% !important}
+
 .acts{display:flex;flex-direction:column;gap:6px;min-width:130px}
 .acts button{
   font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
@@ -257,6 +266,56 @@ dialog.export::backdrop{background:rgba(3,8,3,.82)}
     return true;
   }
 
+  /* X post previews, loaded on demand so the list stays fast */
+  const embed = (function(){
+    let loading = null;
+    function script(){
+      if (loading) return loading;
+      loading = new Promise((resolve, reject) => {
+        if (window.twttr && window.twttr.widgets) { resolve(window.twttr); return; }
+        const s = document.createElement('script');
+        s.src = 'https://platform.twitter.com/widgets.js';
+        s.async = true; s.charset = 'utf-8';
+        s.onload = () => resolve(window.twttr);
+        s.onerror = () => reject(new Error('blocked'));
+        document.head.appendChild(s);
+        setTimeout(() => reject(new Error('timeout')), 9000);
+      });
+      return loading;
+    }
+    function state(shell, text, url){
+      shell.innerHTML = '';
+      const p = document.createElement('div');
+      p.className = 'preview-state';
+      p.textContent = text;
+      if (url){
+        const a = document.createElement('a');
+        a.href = url; a.target = '_blank'; a.rel = 'noopener nofollow';
+        a.textContent = 'Open on X';
+        p.appendChild(a);
+      }
+      shell.appendChild(p);
+    }
+    return async function render(shell, url){
+      const match = String(url).match(/status\/(\d+)/);
+      if (!match){ state(shell, 'Preview unavailable', url); return; }
+      state(shell, 'Loading post');
+      try {
+        const twttr = await script();
+        await new Promise(r => twttr.ready(r));
+        const target = document.createElement('div');
+        shell.innerHTML = '';
+        shell.appendChild(target);
+        const result = await twttr.widgets.createTweet(match[1], target, {
+          theme: 'dark', dnt: true, align: 'left', conversation: 'none', width: 500
+        });
+        if (!result) state(shell, 'Post unavailable', url);
+      } catch (e) {
+        state(shell, 'Preview blocked', url);
+      }
+    };
+  })();
+
   function ago(ts){
     const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
     if (s < 60) return s + 's ago';
@@ -319,8 +378,27 @@ dialog.export::backdrop{background:rgba(3,8,3,.82)}
 
     main.append(who, link, wal);
 
+    const preview = document.createElement('div');
+    preview.className = 'preview';
+    preview.hidden = true;
+    const shell = document.createElement('div');
+    shell.className = 'preview-shell';
+    preview.appendChild(shell);
+    main.appendChild(preview);
+
     const acts = document.createElement('div');
     acts.className = 'acts';
+
+    const peek = document.createElement('button');
+    peek.type = 'button';
+    peek.textContent = 'Preview';
+    let loaded = false;
+    peek.addEventListener('click', () => {
+      preview.hidden = !preview.hidden;
+      peek.textContent = preview.hidden ? 'Preview' : 'Hide preview';
+      if (!preview.hidden && !loaded){ loaded = true; embed(shell, p.url); }
+    });
+    acts.appendChild(peek);
 
     if (!p.paid){
       const sel = document.createElement('button');
