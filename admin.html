@@ -104,12 +104,22 @@ h1{font-family:var(--display);font-weight:500;font-size:26px;letter-spacing:.06e
 
 .preview{margin-top:12px;max-width:520px}
 .preview[hidden]{display:none}
-.preview-shell{border:1px solid var(--line-soft);border-radius:2px;overflow:hidden;background:rgba(3,8,3,.55)}
+.preview-shell{border:1px solid var(--line-soft);border-radius:2px;overflow:hidden;background:rgba(3,8,3,.55);position:relative}
+.preview.clamped .preview-shell{max-height:210px;overflow:hidden}
+.preview.clamped .preview-shell::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:96px;pointer-events:none;
+  background:linear-gradient(to bottom, rgba(7,15,6,0), rgba(7,15,6,.72) 55%, var(--panel) 96%)}
 .preview-state{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
   color:var(--faint);padding:18px;display:flex;align-items:center;gap:10px}
 .preview-state a{color:var(--signal-dim);text-decoration:none;letter-spacing:.14em}
 .preview-state a:hover{color:var(--signal)}
 .preview-shell twitter-widget,.preview-shell iframe{max-width:100% !important}
+.preview-toggle{
+  margin-top:9px;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  background:none;border:1px solid var(--line-soft);color:var(--faint);
+  padding:7px 13px;border-radius:2px;cursor:pointer;transition:.2s}
+.preview-toggle:hover{border-color:var(--signal-dim);color:var(--signal)}
+.preview-toggle[hidden]{display:none}
 
 .acts{display:flex;flex-direction:column;gap:6px;min-width:130px}
 .acts button{
@@ -268,6 +278,7 @@ dialog.export::backdrop{background:rgba(3,8,3,.82)}
 
   /* X post previews, loaded on demand so the list stays fast */
   const embed = (function(){
+    const CLAMP = 210;
     let loading = null;
     function script(){
       if (loading) return loading;
@@ -296,7 +307,7 @@ dialog.export::backdrop{background:rgba(3,8,3,.82)}
       }
       shell.appendChild(p);
     }
-    return async function render(shell, url){
+    async function render(shell, url){
       const match = String(url).match(/status\/(\d+)/);
       if (!match){ state(shell, 'Preview unavailable', url); return; }
       state(shell, 'Loading post');
@@ -313,6 +324,39 @@ dialog.export::backdrop{background:rgba(3,8,3,.82)}
       } catch (e) {
         state(shell, 'Preview blocked', url);
       }
+    }
+    function fit(preview, shell, toggle){
+      function check(){
+        const tall = shell.scrollHeight > CLAMP + 16;
+        toggle.hidden = !tall;
+        if (!tall) preview.classList.remove('clamped');
+      }
+      check();
+      [350, 900, 1800, 3200].forEach(t => setTimeout(check, t));
+      if ('ResizeObserver' in window && shell.firstElementChild){
+        const ro = new ResizeObserver(check);
+        ro.observe(shell.firstElementChild);
+        setTimeout(() => ro.disconnect(), 20000);
+      }
+    }
+    return function build(url){
+      const preview = document.createElement('div');
+      preview.className = 'preview clamped';
+      preview.hidden = true;
+      const shell = document.createElement('div');
+      shell.className = 'preview-shell';
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'preview-toggle';
+      toggle.textContent = 'Expand post';
+      toggle.hidden = true;
+      toggle.addEventListener('click', () => {
+        const clamped = preview.classList.toggle('clamped');
+        toggle.textContent = clamped ? 'Expand post' : 'Collapse';
+      });
+      preview.append(shell, toggle);
+      preview._load = () => render(shell, url).then(() => fit(preview, shell, toggle));
+      return preview;
     };
   })();
 
@@ -378,12 +422,7 @@ dialog.export::backdrop{background:rgba(3,8,3,.82)}
 
     main.append(who, link, wal);
 
-    const preview = document.createElement('div');
-    preview.className = 'preview';
-    preview.hidden = true;
-    const shell = document.createElement('div');
-    shell.className = 'preview-shell';
-    preview.appendChild(shell);
+    const preview = embed(p.url);
     main.appendChild(preview);
 
     const acts = document.createElement('div');
@@ -396,7 +435,7 @@ dialog.export::backdrop{background:rgba(3,8,3,.82)}
     peek.addEventListener('click', () => {
       preview.hidden = !preview.hidden;
       peek.textContent = preview.hidden ? 'Preview' : 'Hide preview';
-      if (!preview.hidden && !loaded){ loaded = true; embed(shell, p.url); }
+      if (!preview.hidden && !loaded){ loaded = true; preview._load(); }
     });
     acts.appendChild(peek);
 
