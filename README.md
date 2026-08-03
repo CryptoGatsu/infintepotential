@@ -1,249 +1,107 @@
 # Infinite Potential ($IP)
 
-Single page site for the $IP token on Robinhood Chain, launched through Pons.
+**Every limit was once permanent.**
 
-No framework, no build step, no npm install. It is one HTML file, one admin page, and two serverless functions. Drop it on Vercel and it runs.
+Infinite Potential is a token on Robinhood Chain, launched through Pons. It carries no product, no roadmap, and no promise of return. It carries one idea, and it measures how many people are willing to hold it.
 
 ---
 
-## What is in here
+## The idea
 
-| File | What it does |
+Potential is the gap between what a thing is right now and everything it has not become yet. Infinite potential is that gap with no ceiling on it.
+
+Not a claim that anything is easy. Not a claim that every outcome is good. Just the plain observation that nobody has ever found the edge of what is possible. Every generation drew a line, called it the limit, and then watched somebody walk across it.
+
+The line was never made of physics. It was made of agreement.
+
+**A limit is just the last place belief stopped.**
+
+---
+
+## Why a token
+
+A memecoin has no revenue, no cash flow, and no factory. That is not a flaw in the design, it is the whole design. What it has instead is the purest version of the thing every asset actually runs on, which is shared conviction.
+
+Gold is a soft yellow metal that does almost nothing useful. Paper money is cotton and ink. A share of stock is a database row. Each one works because enough people decided together that it works. $IP does not hide behind that fact. It is built directly on top of it.
+
+The token side is finite and permanently fixed at one billion. The belief side has no ceiling at all. One person can hold the idea, or a hundred thousand can. That asymmetry is the engine: a bounded thing measuring an unbounded one.
+
+Charts fall. Liquidity thins. Attention moves on. None of that touches the premise, because the premise was never a price.
+
+---
+
+## The receipts
+
+The site keeps a list of dated moments when a barrier everyone treated as settled turned out to be a guess nobody had challenged.
+
+- **6 May 1954.** Roger Bannister ran a mile in 3:59.4 on a wet cinder track. Doctors had spent decades calling four minutes a physiological wall. John Landy broke it 46 days later. Thousands have since.
+- **1903 to 1969.** The Wright brothers stayed up for 12 seconds and covered 120 feet. Sixty six years later, inside one human lifetime, two men stood on the Moon.
+- **14 Oct 1947.** Test pilots had died trying to pass the speed of sound. Chuck Yeager did it with two ribs he had broken falling off a horse two nights earlier.
+- **29 May 1953.** Eight expeditions had failed on Everest and climbers had died there. Hillary and Tenzing reached the top and came back down. More than 6,000 people have now summited.
+- **2003 to today.** Sequencing one human genome took 13 years and roughly 3 billion dollars. It now takes about a day and a few hundred dollars.
+- **22 May 2010.** Laszlo Hanyecz paid 10,000 bitcoin for two pizzas. The joke became a trillion dollar asset class.
+
+None of these were metaphors. They all have dates.
+
+---
+
+## The token
+
+| | |
 |---|---|
-| `index.html` | The whole public site. Markup, styles, and scripts in one file. |
-| `admin.html` | Admin console, served at `/admin`. Review posts, queue payouts, mark them sent. |
-| `api/state.js` | Shared ceiling counter and all time high market cap. |
-| `api/posts.js` | The post wall. Submissions, voting, and admin actions. |
-| `vercel.json` | Clean URLs, no-store on the API, noindex on `/admin`. |
-| `banner.png` | Wide hero artwork. Also the social share image. |
-| `figure.png` | Square artwork used in the About section. |
-| `favicon.svg` `favicon.ico` `apple-touch-icon.png` `icon-192.png` `icon-512.png` | Icon set. |
-| `site.webmanifest` | Android home screen icon and theme color. |
-| `IP-image-prompts.md` | Prompt kit for generating on-brand images. Not deployed. |
+| Ticker | $IP |
+| Contract | `0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B` |
+| Network | Robinhood Chain, chain ID 4663 |
+| Launchpad | Pons |
+| Total supply | 1,000,000,000, fixed, no mint function |
+| Liquidity | Paired against WETH and locked at deployment |
+| Trading fee | 1%, split 70/30 between creator and protocol |
+| Allocations | None. No presale, no team allocation, no vesting, no treasury |
 
-Everything except the last file goes at the site root.
+Standard Pons deploy. The token and its Uniswap V3 pool go live in a single transaction, liquidity locks automatically, and there is no bonding curve and no migration step. Nothing about it can be changed after launch, including by the creator.
 
 ---
 
-## Deploy
+## The rewards go back
 
-### 1. Push to a repo and import it on Vercel
+Pons charges 1% on every trade, and it accrues inside the locked position in two currencies, $IP and WETH. Seventy percent of that goes to the creator wallet.
 
-No build command, no output directory, no framework preset. Vercel picks up `api/` as functions automatically.
+**The $IP side of those rewards goes back out to the people who show up.** Not a treasury, not a marketing budget, not a wallet that quietly grows. Post about $IP and you become eligible for a share of the supply that trading generates.
 
-### 2. Add storage
+The supply is fixed and none of it was set aside at launch. The only way any of it moves is if somebody does something worth seeing. That puts the ceiling on this exactly as high as the community is capable of, which was the point the whole time.
 
-In the Vercel dashboard, go to Storage and add the **Upstash for Redis** integration. It injects these two variables on its own:
-
-```
-KV_REST_API_URL
-KV_REST_API_TOKEN
-```
-
-### 3. Add your admin key
-
-Settings, Environment Variables, add:
-
-```
-ADMIN_KEY = <a long random string>
-```
-
-This is the only thing protecting the remove button. Generate it, do not invent it:
-
-```bash
-openssl rand -hex 32
-```
-
-### 4. Replace the domain placeholder
-
-Open `index.html` and find and replace every instance of:
-
-```
-https://REPLACE-WITH-YOUR-DOMAIN.com
-```
-
-That fixes the canonical URL, `og:url`, and both social preview images in one pass.
-
-### 5. Redeploy
-
-The wall opens, the ceiling goes global, and `/admin` unlocks with your key.
-
-**Skipping step 2 does not break the site.** The API answers 501, the ceiling falls back to per device storage, and the wall shows "The wall opens once the board is connected". Everything else works normally.
+Distributions are voluntary and at the creator's discretion. Nobody is entitled to one, holding $IP does not qualify you, and posting is not a purchase. Read the full disclaimer on the site before you assume otherwise.
 
 ---
 
-## Configuration
+## What is on the site
 
-One object at the bottom of `index.html`. Anything left blank hides its own UI rather than rendering a dead link.
+**The Wall.** Submit a link to your X post and the wallet you want $IP sent to. Everyone else votes it up or down. What rises is what the community decided was worth rewarding, and that is the list distributions are drawn from.
 
-```js
-const CONFIG = {
-  ticker:      "$IP",
-  contract:    "0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B",
-  chain:       "robinhood",
-  pair:        "0x905288de491967770caa5fcc70e3a6c7fe436f19",
-  dexUrl:      "https://dexscreener.com/robinhood/0x905288...",
-  ponsUrl:     "https://www.ponsfamily.com/launchpad/0x95adC3...",
-  stateApi:    "/api/state",
-  xUrl:        "https://x.com/iponrh",
-  communityUrl:"https://x.com/i/communities/1980356612952129721",
-  telegramUrl: ""
-};
-```
+**Break the limit.** A counter showing the current ceiling. Press the button and it is not the ceiling anymore. The number is shared by everyone who has visited and it does not reset when you refresh. There is no final value, no win screen, and no point where the button stops working. That is the entire demonstration.
 
-| Key | Effect if blank |
-|---|---|
-| `contract` | Hides the copy button, shows "Dropping at launch" |
-| `chain` / `pair` | Hides the live market stats strip |
-| `dexUrl` | Hides the Chart button |
-| `ponsUrl` | Buy button becomes a scroll to Tokenomics instead of a link |
-| `stateApi` | Skips the shared state entirely, uses per device storage |
-| `xUrl` / `communityUrl` / `telegramUrl` | Removes that link from nav and footer |
+**Live numbers.** Market cap, 24 hour volume, and all time high market cap, pulled from the pool.
 
 ---
 
-## Live data
+## Links
 
-Market cap, 24 hour volume, and all time high market cap come from the DexScreener public API, refreshed every 45 seconds and again whenever the tab regains focus.
+- Site: `iponrh.com`
+- X: [@IPonRH](https://x.com/iponrh)
+- Community: [X community](https://x.com/i/communities/1980356612952129721)
+- Buy: [Pons](https://www.ponsfamily.com/launchpad/0x95adC3AAd8825410921BcD6e5Ea3F39A3205387B)
+- Chart: [DexScreener](https://dexscreener.com/robinhood/0x905288de491967770caa5fcc70e3a6c7fe436f19)
 
-```
-https://api.dexscreener.com/latest/dex/pairs/robinhood/<pair>
-```
-
-DexScreener does not expose all time high market cap, so the site tracks it itself. Each refresh posts the current figure to `/api/state` and the server keeps the maximum it has ever seen. **It starts accumulating from your first deploy**, so the sooner the site is live the more accurate that number is.
-
----
-
-## API reference
-
-Both functions return `501 {"configured": false}` when the KV variables are missing. The front end treats that as a signal to degrade, not as an error.
-
-### `/api/state`
-
-| Method | Body | Returns |
-|---|---|---|
-| `GET` | | `{ ceiling, ath }` |
-| `POST` | `{"action":"break"}` | `{ ceiling }` incremented |
-| `POST` | `{"action":"ath","value":8147}` | `{ ath }`, only raised if the value is higher |
-
-### `/api/posts`
-
-Public:
-
-| Method | Query or body | Returns |
-|---|---|---|
-| `GET` | `?view=top&offset=0&limit=5` | `{ posts, total }` sorted by net votes |
-| `GET` | `?view=new&offset=0&limit=5` | same, sorted by newest |
-| `POST` | `{"action":"submit","url":"...","wallet":"0x..."}` | the created post |
-| `POST` | `{"action":"vote","id":"12","dir":"up"}` | the updated post |
-
-Admin, all requiring the header `x-admin-key: <ADMIN_KEY>`:
-
-| Method | Query or body | Effect |
-|---|---|---|
-| `GET` | `?view=admin` | Every post, newest first, with full wallet addresses |
-| `GET` | `?view=selected` | The payout queue only |
-| `POST` | `{"action":"select","id":"12"}` | Add to the payout queue |
-| `POST` | `{"action":"unselect","id":"12"}` | Remove from the queue |
-| `POST` | `{"action":"paid","id":"12","amount":"250000"}` | Mark sent and clear from the queue |
-| `POST` | `{"action":"remove","id":"12"}` | Delete the post for everyone |
-
-**Public responses never contain a full wallet address.** They are truncated to `0x218C...646D`. Only the admin views return the complete address. Posting a full address next to a public X handle is a targeting risk, so this is deliberate and worth keeping.
+Names and images can be copied. The contract address cannot. Check it against the official Pons page before you transact.
 
 ---
 
-## Using the admin console
+## A word about what this is not
 
-Go to `/admin` and enter your `ADMIN_KEY`. It is held in `sessionStorage`, so it is gone when the tab closes. There is a Lock button to clear it manually.
+$IP is a memecoin. It has no intrinsic value, no utility, no revenue, and no underlying business. It is not affiliated with Robinhood Markets, Pons Labs, or anyone else named here. Crypto is volatile and speculative, liquidity can vanish, and you can lose everything you put in. Only ever use money you can afford to lose completely.
 
-Three tabs:
-
-- **All posts** is everything not yet paid. Each row has Preview, Queue for payout, and Remove.
-- **Payout queue** is what you have selected. This tab adds Copy wallet list (newline separated, ready for a batch sender), Copy as CSV (`wallet,score,handle,url`), and View queue for when clipboard access is blocked.
-- **Already sent** is your record, including the amount you entered.
-
-A normal round looks like: skim the queue with Preview, queue the ones worth rewarding, copy the wallet list, send the tokens from your wallet, then come back and Mark sent on each one.
-
-Sending is manual and on purpose. Nothing on this site holds a private key or can move tokens.
+The idea is true whether or not the chart agrees. Both of those things can be real at once.
 
 ---
 
-## Data model
-
-Everything lives in Redis under an `ip:` prefix.
-
-```
-ip:ceiling            integer, the shared ceiling
-ip:ath                integer, highest market cap ever seen
-ip:posts:seq          integer, post id counter
-ip:posts:top          sorted set, member = post id, score = net votes
-ip:posts:new          sorted set, member = post id, score = created timestamp
-ip:posts:selected     set of post ids in the payout queue
-ip:post:<id>          JSON blob for one post
-ip:voted:<id>:<addr>  marks that an address already voted on a post
-ip:posturl:<b64>      marks a post URL as already submitted
-ip:rate:*             short lived throttle counters
-```
-
-To reset the wall in production, delete the keys matching `ip:post*`. To reset the ceiling, delete `ip:ceiling`.
-
----
-
-## Abuse controls
-
-The wall hands out tokens, so it is worth knowing what is already in place.
-
-- Post URLs must match the real X status pattern. `twitter.com` links are normalised to `x.com`.
-- Wallets must be a valid 40 character hex address.
-- One entry per post link, enforced with an atomic `SET NX`.
-- Five submissions per hour and thirty votes per minute per address.
-- One vote per address per post. Submitting counts as your own upvote, so you cannot stack your own entry.
-- Twenty state writes per ten seconds per address on the ceiling.
-
-None of this stops a determined person with a proxy pool. It stops casual spam. Final judgement is yours in the admin console, which is why Remove exists.
-
----
-
-## Local development
-
-The API functions need the Vercel runtime:
-
-```bash
-npx vercel dev
-```
-
-For pure front end work, any static server will do. The wall will show as not connected, which is the correct fallback behaviour:
-
-```bash
-python3 -m http.server 8000
-```
-
----
-
-## Customising
-
-**Colours** are CSS custom properties at the top of each file. `--signal` is the main green, `--void` the background, `--glow` the pale highlight.
-
-**Fonts** are Cinzel for display, Inter for body, JetBrains Mono for data and addresses. One Google Fonts link in the head.
-
-**Artwork.** Replacing `banner.png` needs no code change. If it fails to load, the hero falls back to the Cinzel wordmark automatically, which is also what shows on screens under 760px where a 3:1 banner is unreadable.
-
-**Icons.** `favicon.svg` is the source. Regenerate the raster sizes from it with any SVG to PNG tool at 180, 192, and 512, plus a 16/32/48 `.ico`.
-
-**The proof section** is plain markup. Add an `<article class="proof">` block with a date, a struck through `.limit` line, a paragraph, and an `.after` line.
-
----
-
-## Known limits
-
-- X embeds are blocked by most ad blockers. The preview falls back to "Preview blocked" with an Open on X link, which is expected and not a bug.
-- The ceiling uses last write wins. Two simultaneous presses can land on the same number for a moment. It self corrects on the next poll.
-- Vercel Hobby has a monthly function invocation ceiling. The site polls DexScreener client side, so only the ceiling, ATH, and wall touch your functions.
-
----
-
-## Legal
-
-This is a memecoin site. The disclaimer in the footer of `index.html` covers no intrinsic value, no affiliation with Robinhood Markets or Pons Labs, total loss risk, and the discretionary nature of the community rewards.
-
-If you change how rewards work, update that disclaimer to match. The wording that distributions are voluntary and that nobody is entitled to one is doing real work, and "post to earn tokens" is exactly the shape that draws scrutiny. Do not remove it to make the pitch sound stronger.
+*Setup and deployment notes live in `SETUP.md`.*
